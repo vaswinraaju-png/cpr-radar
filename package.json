@@ -1,0 +1,11 @@
+{
+  "name": "cpr-radar",
+  "version": "1.0.0",
+  "description": "CPR Radar - storiesbyachu",
+  "main": "src/server.js",
+  "scripts": { "start": "node src/server.js" },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^2.7.0"
+  }
+}
