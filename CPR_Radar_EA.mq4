@@ -5,8 +5,7 @@
 #property copyright "storiesbyachu"
 #property version   "2.00"
 #property strict
-
-input string ServerURL    = "https://cpr-radar-production.up.railway.app"; // Railway URL
+input string ServerURL = "https://web-production-1f4f7.up.railway.app";
 input double LotSize      = 0.01;
 input int    PollSeconds  = 30;
 input int    Slippage     = 3;
