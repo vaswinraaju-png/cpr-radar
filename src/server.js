@@ -143,7 +143,7 @@ async function doPoll() {
 function startPolling() {
   if (state.polling) return;
   state.polling=true; doPoll();
-  pollTimer=setInterval(doPoll,30000);
+  pollTimer=setInterval(doPoll,180000); // 3 min — enough for 15m candles
 }
 function stopPolling() {
   state.polling=false;
