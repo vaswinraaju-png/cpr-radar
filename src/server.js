@@ -236,11 +236,12 @@ app.get('/api/signals/history',async(req,res)=>{
 });
 
 app.post('/api/backtest/run',async(req,res)=>{
-  const {script,days}=req.body;
+  const {script,days,tf}=req.body;
   if (!script) return res.status(400).json({error:'Script required'});
   try {
     const d=parseInt(days)||60;
-    res.json(await runScriptBacktest(script,d));
+    const t=tf||'15min';
+    res.json(await runScriptBacktest(script,d,t));
   } catch(e){res.status(500).json({error:e.message});}
 });
 
