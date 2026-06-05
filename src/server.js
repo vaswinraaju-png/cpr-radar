@@ -247,6 +247,11 @@ app.post('/api/backtest/run',async(req,res)=>{
   } catch(e){res.status(500).json({error:e.message});}
 });
 
+// Strategies list
+app.get('/api/strategies',(req,res)=>{
+  res.json({strategies:getStrategyList()});
+});
+
 // Health check for Railway
 app.get('/health',(req,res)=>res.json({status:'ok',polling:state.polling,uptime:process.uptime()}));
 
