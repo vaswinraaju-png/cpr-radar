@@ -185,9 +185,9 @@ canvas{display:block;width:100%;height:100%}
 .copy-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
 .copy-btn.copied{border-color:var(--green);color:var(--green);background:var(--green-bg)}
 .panel-log{flex:1;overflow-y:auto;min-height:0;padding:0 18px 14px}
-.bt-log-header{display:grid;grid-template-columns:68px 40px 40px 62px 58px 62px 58px 40px 44px 34px 48px 52px;gap:4px;padding:6px 8px;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1;margin-bottom:3px}
+.bt-log-header{display:grid;grid-template-columns:68px 40px 36px 64px 60px 64px 60px 40px 44px 34px 48px 52px;gap:4px;padding:6px 8px;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1;margin-bottom:3px}
 .bt-log{display:flex;flex-direction:column;gap:2px}
-.bt-row{display:grid;grid-template-columns:68px 40px 40px 62px 58px 62px 58px 40px 44px 34px 48px 52px;gap:4px;padding:6px 8px;border-radius:5px;font-size:11px;transition:background .1s;border:1px solid transparent}
+.bt-row{display:grid;grid-template-columns:68px 40px 36px 64px 60px 64px 60px 40px 44px 34px 48px 52px;gap:4px;padding:6px 8px;border-radius:5px;font-size:11px;transition:background .1s;border:1px solid transparent}
 .bt-row:hover{background:var(--surface2);border-color:var(--border)}
 .bt-row.win{border-left:3px solid var(--green)} .bt-row.loss{border-left:3px solid var(--red)} .bt-row.eod{border-left:3px solid var(--text3)}
 .col-pos{color:var(--green);font-weight:500} .col-neg{color:var(--red);font-weight:500}
@@ -309,7 +309,7 @@ canvas{display:block;width:100%;height:100%}
     <div class="modal-header">
       <div>
         <div class="modal-title">📊 Backtest — Fib 61.8% Strategy</div>
-        <div class="modal-sub">15m close above R1/S1 · Fib 61.8% · 4 strategies · 1:2 RR · 2 credits per run</div>
+        <div class="modal-sub">CPR breakout · Fib 61.8% entry · ATR SL · CPR TP · EMA21 + RSI filters · 4 strategies · 2 credits per run</div>
       </div>
       <button class="modal-close" onclick="closeBTModal()">✕</button>
     </div>
@@ -317,11 +317,19 @@ canvas{display:block;width:100%;height:100%}
       <div class="bt-sel-wrap">
         <select id="btScriptSel"><option value="">— Select script —</option></select>
       </div>
-      <div class="bt-sel-wrap" style="max-width:120px">
+      <div class="bt-sel-wrap" style="max-width:110px">
+        <select id="btTFSel">
+          <option value="1min">1 Minute</option>
+          <option value="5min">5 Minutes</option>
+          <option value="15min" selected>15 Minutes</option>
+        </select>
+      </div>
+      <div class="bt-sel-wrap" style="max-width:110px">
         <select id="btDaysSel">
           <option value="30">30 Days</option>
           <option value="60" selected>60 Days</option>
           <option value="90">90 Days</option>
+          <option value="180">180 Days</option>
         </select>
       </div>
       <button class="bt-run-btn" id="btRunBtn" onclick="runBT()" disabled>▶ Run Backtest</button>
@@ -508,13 +516,15 @@ async function runBT(){
   const btn=document.getElementById('btRunBtn');
   btn.disabled=true; btn.textContent='⏳ Running...';
   const days=parseInt(document.getElementById('btDaysSel').value)||60;
-  document.getElementById('btResultsArea').innerHTML='<div class="bt-loading"><div class="bt-spinner"></div><div>Fetching '+days+' days for <strong>'+name+'</strong>...</div><div style="font-size:11px;color:var(--text3)">2 credits · ~15 seconds</div></div>';
+  const tf=document.getElementById('btTFSel').value||'15min';
+  document.getElementById('btResultsArea').innerHTML='<div class="bt-loading"><div class="bt-spinner"></div><div>Fetching '+days+' days · '+tf+' for <strong>'+name+'</strong>...</div><div style="font-size:11px;color:var(--text3)">2 credits · ~20 seconds</div></div>';
   try{
     const days=parseInt(document.getElementById('btDaysSel').value)||60;
-    const data=await fetch('/api/backtest/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({script,days})}).then(r=>r.json());
+    const tf=document.getElementById('btTFSel').value||'15min';
+    const data=await fetch('/api/backtest/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({script,days,tf})}).then(r=>r.json());
     if(data.error)throw new Error(data.error);
     renderBTResult(data);
-    document.getElementById('btLastRun').textContent='Last: '+data.scriptName+' · '+data.period+' @ '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('btLastRun').textContent='Last: '+data.scriptName+' · '+data.tf+' · '+data.days+'d @ '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
   }catch(e){document.getElementById('btResultsArea').innerHTML='<div class="bt-empty">⚠ '+e.message+'</div>';}
   btn.disabled=false; btn.textContent='▶ Run Backtest';
 }
@@ -581,7 +591,7 @@ function renderSummary(r){
 
 function renderTradeLog(r){
   if(!r.trades.length)return'<div class="bt-empty">No trades found in 60 days.</div>';
-  return'<div class="bt-log-header"><span>Date</span><span>Dir</span><span>Lvl</span><span>Fib Entry</span><span>SL</span><span>TP</span><span>Exit</span><span>Result</span><span>Pips</span><span>SLp</span><span>P&L $</span><span>Cum $</span></div>'+
+  return'<div class="bt-log-header"><span>Date</span><span>Dir</span><span>Lvl</span><span>Entry</span><span>SL</span><span>TP</span><span>Exit</span><span>Result</span><span>Pips</span><span>RR</span><span>P&L $</span><span>Cum $</span></div>'+
     '<div class="bt-log">'+(()=>{let cum=0;return r.trades.map(t=>{
       const pc=t.pnlPips>0?'col-pos':t.pnlPips<0?'col-neg':'',rc=t.exitType==='TP'?'win':t.exitType==='SL'?'loss':'eod',bdg='badge-'+t.exitType.toLowerCase();
       cum+=(t.pnlDollar||0);
@@ -598,7 +608,7 @@ function renderTradeLog(r){
         '<span class="mono">'+t.exitPrice+'</span>'+
         '<span><span class="'+bdg+'">'+t.exitType+'</span></span>'+
         '<span class="mono '+pc+'">'+(t.pnlPips>0?'+':'')+t.pnlPips+'p</span>'+
-        '<span style="font-size:10px;color:var(--text3)">'+t.slPips+'p</span>'+
+        '<span style="font-size:10px;color:var(--text3)">'+t.rr+'x</span>'+
         '<span class="mono" style="font-size:10px;color:'+(t.pnlDollar>=0?'var(--green)':'var(--red)')+'">$'+(t.pnlDollar!=null?(t.pnlDollar>=0?'+':'')+t.pnlDollar:'—')+'</span>'+
         '<span class="mono" style="font-size:10px;color:'+cumColor+'">$'+cumStr+'</span>'+
         '</div>';
