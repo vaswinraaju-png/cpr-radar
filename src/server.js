@@ -2,7 +2,7 @@ const express  = require('express');
 const fetch    = require('node-fetch');
 const { exec } = require('child_process');
 const path     = require('path');
-const { runScriptBacktest, getBTCredits, getScriptList } = require('./backtest');
+const { runScriptBacktest, getScriptList, getStrategyList } = require('./backtest');
 const sb = require('./supabase');
 
 const app  = express();
@@ -160,6 +160,7 @@ app.get('/api/state',(req,res)=>{
     lastPoll:state.lastPoll, error:state.error, polling:state.polling,
     tdCreditCount, creditLimit:4000, btScriptList:getScriptList(),
     scripts:Object.keys(SCRIPTS).map(k=>({key:k,name:SCRIPTS[k].name,type:SCRIPTS[k].type})),
+    strategies:getStrategyList(),
   });
 });
 
@@ -236,12 +237,13 @@ app.get('/api/signals/history',async(req,res)=>{
 });
 
 app.post('/api/backtest/run',async(req,res)=>{
-  const {script,days,tf}=req.body;
+  const {script,days,tf,strategy}=req.body;
   if (!script) return res.status(400).json({error:'Script required'});
   try {
     const d=parseInt(days)||60;
     const t=tf||'15min';
-    res.json(await runScriptBacktest(script,d,t));
+    const s=strategy||'ema_cross';
+    res.json(await runScriptBacktest(script,d,t,s));
   } catch(e){res.status(500).json({error:e.message});}
 });
 
