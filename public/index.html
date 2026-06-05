@@ -492,8 +492,28 @@ function hideErr(){document.getElementById('errBar').style.display='none';}
 let activeRRTab='A', activeBTResult=null;
 
 function openBTModal(){
+  activeRRTab='A';
   document.getElementById('btModal').classList.add('open');
-  // Populate dropdown from state
+  // Populate strategy dropdown from API
+  const stratSel=document.getElementById('btStrategySel');
+  if(stratSel.options.length<=1){
+    fetch('/api/strategies').then(r=>r.json()).then(data=>{
+      (data.strategies||[]).forEach(function(s){
+        const o=document.createElement('option');
+        o.value=s.key; o.textContent=s.name; o.title=s.desc||'';
+        stratSel.appendChild(o);
+      });
+      stratSel.onchange=function(){
+        const scriptOk=document.getElementById('btScriptSel').value;
+        document.getElementById('btRunBtn').disabled=!(scriptOk&&stratSel.value);
+        if(stratSel.value){
+          const desc=stratSel.options[stratSel.selectedIndex].title;
+          document.getElementById('btResultsArea').innerHTML='<div class="bt-idle"><div class="bt-idle-icon">📊</div><div><strong>'+stratSel.options[stratSel.selectedIndex].text+'</strong></div><div style="font-size:11px;color:var(--text3);max-width:500px;text-align:center;padding:0 20px">'+desc+'</div></div>';
+        }
+      };
+    }).catch(function(e){console.error('strategies fetch failed',e);});
+  }
+  // Populate script dropdown from state
   const sel=document.getElementById('btScriptSel');
   if(sel.options.length>1)return;
   const scripts=appState?.btScriptList||appState?.scripts||[];
